@@ -1,31 +1,72 @@
+<!-- client.html -->
+
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    
-    <div class="wrapper">
-        <div class="user-container">
-            대화명 : <input type="text" id="nickname">
-        </div>
-        <div class="display-container">
-            <ul class="chatting-list"></ul>
-        </div>
-        <div class="input-container">
-            <input type="text" class="chatting-input">
-            <button class="send-button">전송</button>
-        </div>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Chat</title>
+    <style>
+      .chat_log{ width: 95%; height: 200px; }
+      .name{ width: 10%; }
+      .message{ width: 70%; }
+      .chat{ width: 10%; }
+    </style>
+  </head>
+  <body>
+      <p id="count"></p>
+    <div>
+      <textarea id="chatLog" class="chat_log" readonly></textarea>
     </div>
-    
-    
-    <script src="/socket.io/socket.io.js"> </script>
-    <script src="./js/chat.js"> </script>
+    <form id="chat">
+      <input id="name" class="name" type="text" hidden="true" readonly>
+      <input id="message" class="message" type="text">
+      <input type="submit" class="chat" value="chat"/>
+      <button type="button" id="randomChatFindBtn">대화상대 찾기</button>
+    </form>
+    <div id="box" class="box">
+    <script src="/socket.io/socket.io.js"></script> <!-- 1 -->
+    <script src="//code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var socket = io(); //1
+      $('#chat').on('submit', function(e){ //2
+        
+        socket.emit('send message', $('#name').val(), $('#message').val());
+        $('#message').val('');
+        $('#message').focus();
+        e.preventDefault();
+      });
+      
+      socket.on('receive message', function(name,msg){ //3
+
+        var socketId = $('#name').val();
+        var nickName= "";
+
+        if(socketId ===name){
+            nickName="당신" 
+        }else{
+            nickName="낯선상대";
+        } 
+        $('#chatLog').append(`${nickName} : ${msg} \n`);
+        $('#chatLog').scrollTop($('#chatLog')[0].scrollHeight);
+      });
+      
+      $(document).ready(function(){
+
+          socket.on('load name', function(name){ //4
+            $('#name').val(name);
+          });
+      });
+
+      $("#randomChatFindBtn").on('click', ()=>{
+        
+        var socketId = $('#name').val();
+        $("#chatLog").html("");
+        $("#message").val("대화상대를 찾는 중 입니다...");
+        $("#message").prop("readonly",true);
+        socket.emit("randomChatFind",{id:socketId});
+      });
 
 
-    
-</body>
+    </script>
+  </body>
 </html>
