@@ -27,16 +27,25 @@
     <script src="/socket.io/socket.io.js"></script> <!-- 1 -->
     <script src="//code.jquery.com/jquery-1.11.1.js"></script>
     <script>
-      var socket = io(); //1
-      $('#chat').on('submit', function(e){ //2
-        
+      var socket = io();  //자세히한번알아보기  로드되면 socket.io찾아줌 1
+
+      $(document).ready(function(){   //2
+        socket.on('load name', function(name){ 
+          $('#name').val(name);
+        });
+      
+      var handle = null;
+
+
+      //submit -> send message 이벤트 실행  ///////////3
+      $('#chat').on('submit', function(e){ 
         socket.emit('send message', $('#name').val(), $('#message').val());
         $('#message').val('');
         $('#message').focus();
         e.preventDefault();
       });
-      
-      socket.on('receive message', function(name,msg){ //3
+      //       
+      socket.on('receive message', function(name,msg){ ///////6 
 
         var socketId = $('#name').val();
         var nickName= "";
@@ -50,23 +59,43 @@
         $('#chatLog').scrollTop($('#chatLog')[0].scrollHeight);
       });
       
-      $(document).ready(function(){
-
-          socket.on('load name', function(name){ //4
-            $('#name').val(name);
-          });
-      });
-
+      
       $("#randomChatFindBtn").on('click', ()=>{
         
         var socketId = $('#name').val();
         $("#chatLog").html("");
         $("#message").val("대화상대를 찾는 중 입니다...");
         $("#message").prop("readonly",true);
-        socket.emit("randomChatFind",{id:socketId});
+        
+        socket.emit("randomChatBtnClick",{id:socketId});
+        startFind(socketId);
       });
+      
+      socket.on("matchingComplete",()=>{
+        $('#chatLog').append(`랜덤한 사람이 대화방에 입장했습니다. 편하게 대화하시길 바랍니다!~ \n`);
+        $("#message").val("");
+        $("#message").prop("readonly",false);
+        stopFind();
 
+      });
+      
+      
 
+      function startFind(socketId){
+       if(handle == null){
+         handle = setInterval(function(){
+          socket.emit("randomChatFind",{id:socketId});
+          
+         },500);
+       }
+      }
+
+      function stopFind(){
+        clearInterval(handle);
+        handle = null;
+      }
+
+    });
     </script>
   </body>
 </html>
