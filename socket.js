@@ -23,11 +23,8 @@ io.on('connection', function(socket){
   //io.to(소켓아이디) 에게만   ///////////2 
   io.to(socket.id).emit('load name',socket.id);  
   
-  socket.on('send message', function(name,text){   ////////////4
-    var msg = text;
-    console.log(name);
-    console.log(text);
-    io.emit('receive message', name,text); ///////////5
+  socket.on('send message', function(data){   ////////////4
+    io.sockets.to(data.roomName).emit('receive message', data.name,data.text); ///////////5
   });
   
   socket.on('randomChatBtnClick',(data)=>{
@@ -35,6 +32,19 @@ io.on('connection', function(socket){
       if(clients[i].id == data.id){
         clients[i].status='f';
       }
+    }
+  });
+
+  socket.on('randomChatQuitClick',(data)=>{
+    io.sockets.to(data.roomName).emit("end chat");
+    // console.log("12ddddddddddd3",roomName);
+    for(var i =0 ; i<clients.length ; i++){
+        if(clients[i].roomName == data.roomName){
+            clients[i].status="w";
+            clients[i].roomName="";
+            clients[i].socket.leave(data.roomName);
+        }
+
     }
   });
 
@@ -51,12 +61,12 @@ io.on('connection', function(socket){
         clients[i].roomName = uuid;
         clients[i].socket.join(uuid);//해당 소켓 uuid 방이동
         console.log(" 방이동1");
-        for(var i =0 ; i<clients.length ; i++){
-          if(clients[i].id == data.id){
-            clients[i].status='c';
-            clients[i].roomName= uuid;
-            clients[i].socket.join(uuid);//해당 소켓 uuid 방이동
-            io.sockets.to(uuid).emit("matchingComplete");
+        for(var j =0 ; j<clients.length ; j++){
+          if(clients[j].id == data.id){
+            clients[j].status='c';
+            clients[j].roomName= uuid;
+            clients[j].socket.join(uuid);//해당 소켓 uuid 방이동
+            io.sockets.to(uuid).emit("matchingComplete",{roomName:uuid});
             console.log("방이동2");
             return;
           }
@@ -64,18 +74,30 @@ io.on('connection', function(socket){
       }
     }
   });
+  //방문자 카운팅
+  socket.on("clientsCount",()=>{
+    io.sockets.emit("clientsCnt",clients.length);
+  });
 
   //소켓 disconnect 
-  socket.on('disconnect', function(){ 
-    console.log('user disconnected: ', socket.id);
-    for(var i =0 ; i<clients.length ; i++){
-      if(clients[i].id == socket.id){
-        clients.splice(i,1);
-      }
-    }
-    // console.log(clients);
+  socket.on('disconnect', (socket)=>{ 
+    // for(var i =0 ; i<clients.length ; i++){
+    //   if(clients[i].id == socket.id){
+    //     var roomName = clients[i].roomName;
+      
+    //     if(clients[i].roomName == roomName){
+    //        clients[i].status="w";
+    //        clients[i].roomName="";
+    //        clients[i].socket.leave(roomName);
+    //       }
+
+    //     clients.splice(i,1);
+    //   }
+    // }
+    console.log(clients);
     // console.log(clients.length);
   });
 });
+
 
 }

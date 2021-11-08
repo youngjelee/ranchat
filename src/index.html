@@ -14,14 +14,21 @@
   </head>
   <body>
       <p id="count"></p>
+      <div id="cnt">
+      
+      </div>
     <div>
-      <textarea id="chatLog" class="chat_log" readonly></textarea>
+      <textarea id="chatLog" class="chat_log" readonly>
+
+      </textarea>
     </div>
     <form id="chat">
       <input id="name" class="name" type="text" hidden="true" readonly>
+      <input id="roomName" class="name" type="text" hidden="false" readonly>
       <input id="message" class="message" type="text">
       <input type="submit" class="chat" value="chat"/>
       <button type="button" id="randomChatFindBtn">대화상대 찾기</button>
+      <button type="button" id="randomChatQuitBtn" style="display:none;">채팅종료하기</button>
     </form>
     <div id="box" class="box">
     <script src="/socket.io/socket.io.js"></script> <!-- 1 -->
@@ -33,13 +40,15 @@
         socket.on('load name', function(name){ 
           $('#name').val(name);
         });
+        // clientCount();
       
       var handle = null;
 
 
       //submit -> send message 이벤트 실행  ///////////3
       $('#chat').on('submit', function(e){ 
-        socket.emit('send message', $('#name').val(), $('#message').val());
+        socket.emit('send message',
+        {name :$('#name').val(), text:$('#message').val(),roomName:$("#roomName").val()});
         $('#message').val('');
         $('#message').focus();
         e.preventDefault();
@@ -59,9 +68,8 @@
         $('#chatLog').scrollTop($('#chatLog')[0].scrollHeight);
       });
       
-      
+      //대화상대찾기 
       $("#randomChatFindBtn").on('click', ()=>{
-        
         var socketId = $('#name').val();
         $("#chatLog").html("");
         $("#message").val("대화상대를 찾는 중 입니다...");
@@ -71,14 +79,42 @@
         startFind(socketId);
       });
       
-      socket.on("matchingComplete",()=>{
+      //채팅종료하기
+      $("#randomChatQuitBtn").on('click', ()=>{
+        var socketId = $('#name').val();
+        var roomName = $("#roomName").val();
+        $("#chatLog").html("");
+        $("#message").val("채팅이 종료되었습니다.");
+        $("#message").prop("readonly",true);
+        
+        socket.emit("randomChatQuitClick",{id:socketId,roomName:roomName});
+        // startFind(socketId);
+      });
+
+      socket.on('end chat',()=>{
+        $("#chatLog").html("");
+        $("#message").val("채팅이 종료되었습니다.");
+        $("#message").prop("readonly",true);
+        $("#randomChatQuitBtn").hide();
+        $("#randomChatFindBtn").show();
+      });
+
+
+
+      
+      socket.on("matchingComplete",(data)=>{
+        $("#roomName").val(data.roomName);
         $('#chatLog').append(`랜덤한 사람이 대화방에 입장했습니다. 편하게 대화하시길 바랍니다!~ \n`);
         $("#message").val("");
         $("#message").prop("readonly",false);
         stopFind();
-
+        $("#randomChatQuitBtn").show();
+        $("#randomChatFindBtn").hide();
       });
       
+      socket.on("clientsCnt",(data)=>{
+        $("#cnt").html(data);
+      });
       
 
       function startFind(socketId){
@@ -93,6 +129,11 @@
       function stopFind(){
         clearInterval(handle);
         handle = null;
+      }
+      function clientCount(){
+        setInterval(function(){
+          socket.emit("clientsCount");
+        },1500);
       }
 
     });
