@@ -8,10 +8,7 @@ module.exports = function(io){
 
 //소캣 연결시
 io.on('connection', function(socket){ 
-
-  //고객정보 구성
-  //id: socketId  roomName : 방제 , status : (w -대기, f-찾는중, c -매칭) 
-  
+  // //고객정보 구성 id: socketId  roomName : 방제 , status : (w -대기, f-찾는중, c -매칭) 
   //방문자 정보 push                               
     clients.push({
         id : socket.id,
@@ -44,13 +41,19 @@ io.on('connection', function(socket){
             clients[i].roomName="";
             clients[i].socket.leave(data.roomName);
         }
-
+        for(var j= 0 ; j<clients.length; j++){
+          if(clients[j].roomName == data.roomName){
+            clients[j].status="w";
+            clients[j].roomName="";
+            clients[j].socket.leave(data.roomName);
+        }
+        }
     }
+    
+
   });
 
-
   socket.on('randomChatFind',(data)=>{
-
     //상대 찾기
     var uuid =uuidv4();  
     for ( var i = 0 ; i<clients.length; i++){
@@ -80,21 +83,28 @@ io.on('connection', function(socket){
   });
 
   //소켓 disconnect 
-  socket.on('disconnect', (socket)=>{ 
-    // for(var i =0 ; i<clients.length ; i++){
-    //   if(clients[i].id == socket.id){
-    //     var roomName = clients[i].roomName;
-      
-    //     if(clients[i].roomName == roomName){
-    //        clients[i].status="w";
-    //        clients[i].roomName="";
-    //        clients[i].socket.leave(roomName);
-    //       }
+  
+  socket.on('disconnect', ()=>{ 
+    for(var i =0 ; i<clients.length ; i++){
+      if(clients[i].id == socket.id){
+        if(clients[i].status== 'c'){
+          for(var j= 0 ; j<clients.length; j++){
+              if(clients[j].roomName==clients[i].roomName){
+                io.sockets.to(clients[i].roomName).emit("end chat");
+                clients[j].status="w";
+                clients[j].roomName="";
+                clients[j].socket.leave(clients[i].roomName);
+                
+              }
 
-    //     clients.splice(i,1);
-    //   }
-    // }
+            }
+       }
+        clients.splice(i,1);
+      }
+    }
+
     console.log(clients);
+    console.log("===================================");
     // console.log(clients.length);
   });
 });

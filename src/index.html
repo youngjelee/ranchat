@@ -40,7 +40,7 @@
         socket.on('load name', function(name){ 
           $('#name').val(name);
         });
-        // clientCount();
+        clientCount();
       
       var handle = null;
 
@@ -113,7 +113,7 @@
       });
       
       socket.on("clientsCnt",(data)=>{
-        $("#cnt").html(data);
+        $("#cnt").html(data+"명 참가중");
       });
       
 

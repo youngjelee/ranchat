@@ -1,7 +1,6 @@
 {
-  "name": "chat",
+  "name": "h",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "dependencies": {
     "express": "^4.17.1",
@@ -15,5 +14,14 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youngjelee/ranchat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/youngjelee/ranchat/issues"
+  },
+  "homepage": "https://github.com/youngjelee/ranchat#readme",
+  "description": ""
 }
